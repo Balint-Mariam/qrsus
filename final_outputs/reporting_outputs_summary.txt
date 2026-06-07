@@ -1,0 +1,64 @@
+Reporting Outputs Summary
+=========================
+
+Input workbook: C:\Users\user\Desktop\Doctorat\simpozion\output\output_stats.xlsx
+Output root: C:\Users\user\Desktop\Doctorat\simpozion\final_outputs
+
+Used input sheets:
+- adf_pp
+- correlation
+- descriptive
+- diagnostics
+- qlp_2012_2019
+- qlp_2020_2022
+- qlp_2023_present
+- qlp_full
+- qlp_key_results
+- qr_2012_2019
+- qr_2020_2022
+- qr_2023_present
+- qr_pseudo_r2
+- qr_quantile_diff
+- quantile_reg
+- rolling_252
+- rolling_504
+- vif
+
+Generated tables:
+- tables_stationarity.xlsx
+- table_descriptive_stats.xlsx
+- table_correlation.xlsx
+- table_vif.xlsx
+- table_qr_full.xlsx
+- table_qr_pseudor2.xlsx
+- table_qr_quantile_diff.xlsx
+- table_diagnostics.xlsx
+- table_subsample_summary.xlsx
+- table_qlp_full.xlsx
+- table_qlp_subsamples_detailed.xlsx
+- table_qlp_subsamples_summary.xlsx
+- final_tables_formatted.xlsx
+
+Generated figures:
+- tables_stationarity.png
+- figure_index_levels.png
+- figure_qr_d_vstoxx.png
+- figure_qr_d_bund.png
+- figure_qr_r_ttf.png
+- figure_qr_r_brent.png
+- figure_qr_r_eua.png
+- figure_qr_combined.png
+- figure_rolling_504_r_brent.png
+- figure_rolling_504_d_vstoxx.png
+- figure_rolling_combined.png
+- figure_qlp_full_d_vstoxx.png
+- figure_qlp_full_d_bund.png
+- figure_qlp_full_r_ttf.png
+- figure_qlp_full_r_brent.png
+- figure_qlp_full_r_eua.png
+- figure_qlp_full_combined.png
+- figure_qlp_subsamples_r_brent.png
+- figure_qlp_subsamples_d_vstoxx.png
+
+Warnings / skipped items:
+- None
