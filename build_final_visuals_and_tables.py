@@ -951,6 +951,7 @@ def heatmap_colors(values: List[int]) -> List[str]:
 
 
 def plot_qr_subsample_heatmap(sheets: Dict[str, pd.DataFrame], manifest: List[dict], warnings: List[str]) -> None:
+    qr_subsample_quantiles = [0.10, 0.25, 0.50, 0.75, 0.90]
     rows = []
     columns = []
     for sample in SUBSAMPLES:
@@ -958,7 +959,7 @@ def plot_qr_subsample_heatmap(sheets: Dict[str, pd.DataFrame], manifest: List[di
         df = sheets.get(sheet, pd.DataFrame()).copy()
         if df.empty:
             continue
-        for q in [0.10, 0.50, 0.90]:
+        for q in qr_subsample_quantiles:
             columns.append(f"{sample_label(sample)}\n{q_label(q)}")
         for var in MAIN_VARS:
             pass
@@ -971,7 +972,7 @@ def plot_qr_subsample_heatmap(sheets: Dict[str, pd.DataFrame], manifest: List[di
         row_vals = []
         for sample in SUBSAMPLES:
             df = sheets.get(f"qr_{sample}", pd.DataFrame()).copy()
-            for q in [0.10, 0.50, 0.90]:
+            for q in qr_subsample_quantiles:
                 if df.empty:
                     row_vals.append(0)
                     continue
@@ -982,7 +983,7 @@ def plot_qr_subsample_heatmap(sheets: Dict[str, pd.DataFrame], manifest: List[di
                     row_vals.append(1 if ss["coef"].iloc[0] > 0 else -1)
         matrix.append(row_vals)
 
-    draw_heatmap(matrix, [DISPLAY_NAMES[v] for v in MAIN_VARS], columns, "QR Subsample Significance Summary", SUBDIRS["figures_appendix"], "figure_7_qr_subsample_significance_heatmap", manifest, "Figure 7", "QR subsample significance heatmap")
+    draw_heatmap(matrix, [DISPLAY_NAMES[v] for v in MAIN_VARS], columns, "QR Subsample Significance Summary", SUBDIRS["figures_appendix"], "figure_7_qr_subsample_significance_heatmap", manifest, "Figure 7", "QR subsample significance heatmap across all estimated quantiles")
 
 
 def plot_qlp_significance_heatmap(sheets: Dict[str, pd.DataFrame], manifest: List[dict], warnings: List[str]) -> None:
@@ -1022,7 +1023,8 @@ def draw_heatmap(
     number: str,
     description: str,
 ) -> None:
-    fig, ax = plt.subplots(figsize=(13, 5.5))
+    fig_width = max(13, 3.5 + 0.85 * len(xlabels))
+    fig, ax = plt.subplots(figsize=(fig_width, 5.5))
     draw_heatmap_on_axis(ax, matrix, ylabels, xlabels, title)
     fig.tight_layout()
     export_figure(fig, out_dir, basename, manifest, number, description, "appendix")
