@@ -1,0 +1,156 @@
+output_file,output_type,figure_or_table_number,description,intended_use
+tables_excel\final_tables_powerpoint_ready.xlsx,XLSX,Tables,Formatted PowerPoint-ready tables,all
+tables_excel\table_1_descriptive_statistics.xlsx,XLSX,T1_Descriptive,Table 1 - Descriptive Statistics,all
+tables_png\table_1_descriptive_statistics.png,PNG,T1_Descriptive,Table 1 - Descriptive Statistics,all
+tables_excel\table_2_stationarity_tests.xlsx,XLSX,T2_Stationarity,Table 2 - Stationarity Tests,all
+tables_png\table_2_stationarity_tests.png,PNG,T2_Stationarity,Table 2 - Stationarity Tests,all
+tables_excel\table_3_correlation_matrix.xlsx,XLSX,T3_Correlation,Table 3 - Correlation Matrix,all
+tables_png\table_3_correlation_matrix.png,PNG,T3_Correlation,Table 3 - Correlation Matrix,all
+tables_excel\table_4_vif.xlsx,XLSX,T4_VIF,Table 4 - Variance Inflation Factors,all
+tables_png\table_4_vif.png,PNG,T4_VIF,Table 4 - Variance Inflation Factors,all
+tables_excel\table_5_qr_full_sample.xlsx,XLSX,T5_QR_Full,Table 5 - Full-Sample Quantile Regression Results,all
+tables_png\table_5_qr_full_sample.png,PNG,T5_QR_Full,Table 5 - Full-Sample Quantile Regression Results,all
+tables_powerpoint_ready\table_5_qr_full_sample_compact.png,PNG,T5_QR_Full,Table 5 - Full-Sample Quantile Regression Results (Compact),slides
+tables_excel\table_6_main_findings_summary.xlsx,XLSX,T6_Main_Findings,Table 6 - Main Findings Summary,all
+tables_png\table_6_main_findings_summary.png,PNG,T6_Main_Findings,Table 6 - Main Findings Summary,all
+tables_excel\table_7_quantile_difference_tests.xlsx,XLSX,T7_Quantile_Diff,Table 7 - Quantile-Difference Tests,all
+tables_png\table_7_quantile_difference_tests.png,PNG,T7_Quantile_Diff,Table 7 - Quantile-Difference Tests,all
+tables_excel\table_8_diagnostics_summary.xlsx,XLSX,T8_Diagnostics,Table 8 - Diagnostics Summary,all
+tables_png\table_8_diagnostics_summary.png,PNG,T8_Diagnostics,Table 8 - Diagnostics Summary,all
+tables_excel\table_9_qlp_full_sample.xlsx,XLSX,T9_QLP_Full,Table 9 - QLP Full Sample Summary,all
+tables_png\table_9_qlp_full_sample.png,PNG,T9_QLP_Full,Table 9 - QLP Full Sample Summary,all
+tables_powerpoint_ready\table_9_qlp_full_sample_compact.png,PNG,T9_QLP_Full,Table 9 - QLP Full Sample Summary (Compact),slides
+tables_excel\table_10_qlp_subsample_summary.xlsx,XLSX,T10_QLP_Sub_Summary,Table 10 - QLP Subsample Significance Summary,all
+tables_png\table_10_qlp_subsample_summary.png,PNG,T10_QLP_Sub_Summary,Table 10 - QLP Subsample Significance Summary,all
+figures_main\figure_1a_normalized_indices_clean.png,PNG,Figure 1A,Normalized index performance,paper
+figures_main\figure_1a_normalized_indices_clean.pdf,PDF,Figure 1A,Normalized index performance,paper
+figures_main\figure_1a_normalized_indices_clean.svg,SVG,Figure 1A,Normalized index performance,paper
+figures_main\figure_1b_normalized_indices_regimes.png,PNG,Figure 1B,Normalized index performance with regime shading,paper
+figures_main\figure_1b_normalized_indices_regimes.pdf,PDF,Figure 1B,Normalized index performance with regime shading,paper
+figures_main\figure_1b_normalized_indices_regimes.svg,SVG,Figure 1B,Normalized index performance with regime shading,paper
+figures_main\figure_2a_drivers_2x3.png,PNG,Figure 2A,Drivers over time,paper
+figures_main\figure_2a_drivers_2x3.pdf,PDF,Figure 2A,Drivers over time,paper
+figures_main\figure_2a_drivers_2x3.svg,SVG,Figure 2A,Drivers over time,paper
+figures_main\figure_2b_drivers_3x2.png,PNG,Figure 2B,Drivers over time,paper
+figures_main\figure_2b_drivers_3x2.pdf,PDF,Figure 2B,Drivers over time,paper
+figures_main\figure_2b_drivers_3x2.svg,SVG,Figure 2B,Drivers over time,paper
+figures_main\figure_3a_qr_full_combined_single_line.png,PNG,Figure 3A,QR full-sample combined figure,paper
+figures_main\figure_3a_qr_full_combined_single_line.pdf,PDF,Figure 3A,QR full-sample combined figure,paper
+figures_main\figure_3a_qr_full_combined_single_line.svg,SVG,Figure 3A,QR full-sample combined figure,paper
+figures_variants\figure_3b_qr_full_combined_colored_quantiles.png,PNG,Figure 3B,QR full-sample combined figure,paper
+figures_variants\figure_3b_qr_full_combined_colored_quantiles.pdf,PDF,Figure 3B,QR full-sample combined figure,paper
+figures_variants\figure_3b_qr_full_combined_colored_quantiles.svg,SVG,Figure 3B,QR full-sample combined figure,paper
+figures_variants\figure_3c_qr_d_vstoxx.png,PNG,Figure 3C,Individual QR figure for ΔVSTOXX,paper
+figures_variants\figure_3c_qr_d_vstoxx.pdf,PDF,Figure 3C,Individual QR figure for ΔVSTOXX,paper
+figures_variants\figure_3c_qr_d_vstoxx.svg,SVG,Figure 3C,Individual QR figure for ΔVSTOXX,paper
+figures_variants\figure_3c_qr_d_bund.png,PNG,Figure 3C,Individual QR figure for ΔBund 10Y,paper
+figures_variants\figure_3c_qr_d_bund.pdf,PDF,Figure 3C,Individual QR figure for ΔBund 10Y,paper
+figures_variants\figure_3c_qr_d_bund.svg,SVG,Figure 3C,Individual QR figure for ΔBund 10Y,paper
+figures_variants\figure_3c_qr_r_ttf.png,PNG,Figure 3C,Individual QR figure for TTF Return,paper
+figures_variants\figure_3c_qr_r_ttf.pdf,PDF,Figure 3C,Individual QR figure for TTF Return,paper
+figures_variants\figure_3c_qr_r_ttf.svg,SVG,Figure 3C,Individual QR figure for TTF Return,paper
+figures_variants\figure_3c_qr_r_brent.png,PNG,Figure 3C,Individual QR figure for Brent Return,paper
+figures_variants\figure_3c_qr_r_brent.pdf,PDF,Figure 3C,Individual QR figure for Brent Return,paper
+figures_variants\figure_3c_qr_r_brent.svg,SVG,Figure 3C,Individual QR figure for Brent Return,paper
+figures_variants\figure_3c_qr_r_eua.png,PNG,Figure 3C,Individual QR figure for EUA Return,paper
+figures_variants\figure_3c_qr_r_eua.pdf,PDF,Figure 3C,Individual QR figure for EUA Return,paper
+figures_variants\figure_3c_qr_r_eua.svg,SVG,Figure 3C,Individual QR figure for EUA Return,paper
+figures_main\figure_4a_rolling_qr_504_all_variables.png,PNG,Figure 4A,Rolling QR all variables 504,paper
+figures_main\figure_4a_rolling_qr_504_all_variables.pdf,PDF,Figure 4A,Rolling QR all variables 504,paper
+figures_main\figure_4a_rolling_qr_504_all_variables.svg,SVG,Figure 4A,Rolling QR all variables 504,paper
+figures_appendix\figure_4c_rolling_504_vstoxx.png,PNG,Figure 4C,Individual rolling QR for ΔVSTOXX,appendix
+figures_appendix\figure_4c_rolling_504_vstoxx.pdf,PDF,Figure 4C,Individual rolling QR for ΔVSTOXX,appendix
+figures_appendix\figure_4c_rolling_504_vstoxx.svg,SVG,Figure 4C,Individual rolling QR for ΔVSTOXX,appendix
+figures_appendix\figure_4c_rolling_504_bund.png,PNG,Figure 4C,Individual rolling QR for ΔBund 10Y,appendix
+figures_appendix\figure_4c_rolling_504_bund.pdf,PDF,Figure 4C,Individual rolling QR for ΔBund 10Y,appendix
+figures_appendix\figure_4c_rolling_504_bund.svg,SVG,Figure 4C,Individual rolling QR for ΔBund 10Y,appendix
+figures_appendix\figure_4c_rolling_504_ttf.png,PNG,Figure 4C,Individual rolling QR for TTF Return,appendix
+figures_appendix\figure_4c_rolling_504_ttf.pdf,PDF,Figure 4C,Individual rolling QR for TTF Return,appendix
+figures_appendix\figure_4c_rolling_504_ttf.svg,SVG,Figure 4C,Individual rolling QR for TTF Return,appendix
+figures_appendix\figure_4c_rolling_504_brent.png,PNG,Figure 4C,Individual rolling QR for Brent Return,appendix
+figures_appendix\figure_4c_rolling_504_brent.pdf,PDF,Figure 4C,Individual rolling QR for Brent Return,appendix
+figures_appendix\figure_4c_rolling_504_brent.svg,SVG,Figure 4C,Individual rolling QR for Brent Return,appendix
+figures_appendix\figure_4c_rolling_504_eua.png,PNG,Figure 4C,Individual rolling QR for EUA Return,appendix
+figures_appendix\figure_4c_rolling_504_eua.pdf,PDF,Figure 4C,Individual rolling QR for EUA Return,appendix
+figures_appendix\figure_4c_rolling_504_eua.svg,SVG,Figure 4C,Individual rolling QR for EUA Return,appendix
+figures_main\figure_4b_rolling_qr_252_all_variables.png,PNG,Figure 4B,Rolling QR all variables 252,paper
+figures_main\figure_4b_rolling_qr_252_all_variables.pdf,PDF,Figure 4B,Rolling QR all variables 252,paper
+figures_main\figure_4b_rolling_qr_252_all_variables.svg,SVG,Figure 4B,Rolling QR all variables 252,paper
+figures_appendix\figure_4c_rolling_252_vstoxx.png,PNG,Figure 4C,Individual rolling QR for ΔVSTOXX,appendix
+figures_appendix\figure_4c_rolling_252_vstoxx.pdf,PDF,Figure 4C,Individual rolling QR for ΔVSTOXX,appendix
+figures_appendix\figure_4c_rolling_252_vstoxx.svg,SVG,Figure 4C,Individual rolling QR for ΔVSTOXX,appendix
+figures_appendix\figure_4c_rolling_252_bund.png,PNG,Figure 4C,Individual rolling QR for ΔBund 10Y,appendix
+figures_appendix\figure_4c_rolling_252_bund.pdf,PDF,Figure 4C,Individual rolling QR for ΔBund 10Y,appendix
+figures_appendix\figure_4c_rolling_252_bund.svg,SVG,Figure 4C,Individual rolling QR for ΔBund 10Y,appendix
+figures_appendix\figure_4c_rolling_252_ttf.png,PNG,Figure 4C,Individual rolling QR for TTF Return,appendix
+figures_appendix\figure_4c_rolling_252_ttf.pdf,PDF,Figure 4C,Individual rolling QR for TTF Return,appendix
+figures_appendix\figure_4c_rolling_252_ttf.svg,SVG,Figure 4C,Individual rolling QR for TTF Return,appendix
+figures_appendix\figure_4c_rolling_252_brent.png,PNG,Figure 4C,Individual rolling QR for Brent Return,appendix
+figures_appendix\figure_4c_rolling_252_brent.pdf,PDF,Figure 4C,Individual rolling QR for Brent Return,appendix
+figures_appendix\figure_4c_rolling_252_brent.svg,SVG,Figure 4C,Individual rolling QR for Brent Return,appendix
+figures_appendix\figure_4c_rolling_252_eua.png,PNG,Figure 4C,Individual rolling QR for EUA Return,appendix
+figures_appendix\figure_4c_rolling_252_eua.pdf,PDF,Figure 4C,Individual rolling QR for EUA Return,appendix
+figures_appendix\figure_4c_rolling_252_eua.svg,SVG,Figure 4C,Individual rolling QR for EUA Return,appendix
+figures_main\figure_5a_qlp_full_all_variables_ribbon.png,PNG,Figure 5A,QLP full-sample all variables,paper
+figures_main\figure_5a_qlp_full_all_variables_ribbon.pdf,PDF,Figure 5A,QLP full-sample all variables,paper
+figures_main\figure_5a_qlp_full_all_variables_ribbon.svg,SVG,Figure 5A,QLP full-sample all variables,paper
+figures_variants\figure_5b_qlp_full_all_variables_errorbar.png,PNG,Figure 5B,QLP full-sample all variables,paper
+figures_variants\figure_5b_qlp_full_all_variables_errorbar.pdf,PDF,Figure 5B,QLP full-sample all variables,paper
+figures_variants\figure_5b_qlp_full_all_variables_errorbar.svg,SVG,Figure 5B,QLP full-sample all variables,paper
+figures_variants\figure_5c_qlp_full_d_vstoxx.png,PNG,Figure 5C,Individual QLP full-sample figure for ΔVSTOXX,paper
+figures_variants\figure_5c_qlp_full_d_vstoxx.pdf,PDF,Figure 5C,Individual QLP full-sample figure for ΔVSTOXX,paper
+figures_variants\figure_5c_qlp_full_d_vstoxx.svg,SVG,Figure 5C,Individual QLP full-sample figure for ΔVSTOXX,paper
+figures_variants\figure_5c_qlp_full_d_bund.png,PNG,Figure 5C,Individual QLP full-sample figure for ΔBund 10Y,paper
+figures_variants\figure_5c_qlp_full_d_bund.pdf,PDF,Figure 5C,Individual QLP full-sample figure for ΔBund 10Y,paper
+figures_variants\figure_5c_qlp_full_d_bund.svg,SVG,Figure 5C,Individual QLP full-sample figure for ΔBund 10Y,paper
+figures_variants\figure_5c_qlp_full_r_ttf.png,PNG,Figure 5C,Individual QLP full-sample figure for TTF Return,paper
+figures_variants\figure_5c_qlp_full_r_ttf.pdf,PDF,Figure 5C,Individual QLP full-sample figure for TTF Return,paper
+figures_variants\figure_5c_qlp_full_r_ttf.svg,SVG,Figure 5C,Individual QLP full-sample figure for TTF Return,paper
+figures_variants\figure_5c_qlp_full_r_brent.png,PNG,Figure 5C,Individual QLP full-sample figure for Brent Return,paper
+figures_variants\figure_5c_qlp_full_r_brent.pdf,PDF,Figure 5C,Individual QLP full-sample figure for Brent Return,paper
+figures_variants\figure_5c_qlp_full_r_brent.svg,SVG,Figure 5C,Individual QLP full-sample figure for Brent Return,paper
+figures_variants\figure_5c_qlp_full_r_eua.png,PNG,Figure 5C,Individual QLP full-sample figure for EUA Return,paper
+figures_variants\figure_5c_qlp_full_r_eua.pdf,PDF,Figure 5C,Individual QLP full-sample figure for EUA Return,paper
+figures_variants\figure_5c_qlp_full_r_eua.svg,SVG,Figure 5C,Individual QLP full-sample figure for EUA Return,paper
+figures_appendix\figure_6a_qlp_subsamples_d_vstoxx.png,PNG,Figure 6A,QLP subsample evidence for ΔVSTOXX,appendix
+figures_appendix\figure_6a_qlp_subsamples_d_vstoxx.pdf,PDF,Figure 6A,QLP subsample evidence for ΔVSTOXX,appendix
+figures_appendix\figure_6a_qlp_subsamples_d_vstoxx.svg,SVG,Figure 6A,QLP subsample evidence for ΔVSTOXX,appendix
+figures_slides\figure_6b_qlp_subsamples_compact_d_vstoxx.png,PNG,Figure 6B,Compact slide QLP subsample figure for ΔVSTOXX,slides
+figures_slides\figure_6b_qlp_subsamples_compact_d_vstoxx.pdf,PDF,Figure 6B,Compact slide QLP subsample figure for ΔVSTOXX,slides
+figures_slides\figure_6b_qlp_subsamples_compact_d_vstoxx.svg,SVG,Figure 6B,Compact slide QLP subsample figure for ΔVSTOXX,slides
+figures_appendix\figure_6a_qlp_subsamples_d_bund.png,PNG,Figure 6A,QLP subsample evidence for ΔBund 10Y,appendix
+figures_appendix\figure_6a_qlp_subsamples_d_bund.pdf,PDF,Figure 6A,QLP subsample evidence for ΔBund 10Y,appendix
+figures_appendix\figure_6a_qlp_subsamples_d_bund.svg,SVG,Figure 6A,QLP subsample evidence for ΔBund 10Y,appendix
+figures_slides\figure_6b_qlp_subsamples_compact_d_bund.png,PNG,Figure 6B,Compact slide QLP subsample figure for ΔBund 10Y,slides
+figures_slides\figure_6b_qlp_subsamples_compact_d_bund.pdf,PDF,Figure 6B,Compact slide QLP subsample figure for ΔBund 10Y,slides
+figures_slides\figure_6b_qlp_subsamples_compact_d_bund.svg,SVG,Figure 6B,Compact slide QLP subsample figure for ΔBund 10Y,slides
+figures_appendix\figure_6a_qlp_subsamples_r_ttf.png,PNG,Figure 6A,QLP subsample evidence for TTF Return,appendix
+figures_appendix\figure_6a_qlp_subsamples_r_ttf.pdf,PDF,Figure 6A,QLP subsample evidence for TTF Return,appendix
+figures_appendix\figure_6a_qlp_subsamples_r_ttf.svg,SVG,Figure 6A,QLP subsample evidence for TTF Return,appendix
+figures_slides\figure_6b_qlp_subsamples_compact_r_ttf.png,PNG,Figure 6B,Compact slide QLP subsample figure for TTF Return,slides
+figures_slides\figure_6b_qlp_subsamples_compact_r_ttf.pdf,PDF,Figure 6B,Compact slide QLP subsample figure for TTF Return,slides
+figures_slides\figure_6b_qlp_subsamples_compact_r_ttf.svg,SVG,Figure 6B,Compact slide QLP subsample figure for TTF Return,slides
+figures_appendix\figure_6a_qlp_subsamples_r_brent.png,PNG,Figure 6A,QLP subsample evidence for Brent Return,appendix
+figures_appendix\figure_6a_qlp_subsamples_r_brent.pdf,PDF,Figure 6A,QLP subsample evidence for Brent Return,appendix
+figures_appendix\figure_6a_qlp_subsamples_r_brent.svg,SVG,Figure 6A,QLP subsample evidence for Brent Return,appendix
+figures_slides\figure_6b_qlp_subsamples_compact_r_brent.png,PNG,Figure 6B,Compact slide QLP subsample figure for Brent Return,slides
+figures_slides\figure_6b_qlp_subsamples_compact_r_brent.pdf,PDF,Figure 6B,Compact slide QLP subsample figure for Brent Return,slides
+figures_slides\figure_6b_qlp_subsamples_compact_r_brent.svg,SVG,Figure 6B,Compact slide QLP subsample figure for Brent Return,slides
+figures_appendix\figure_6a_qlp_subsamples_r_eua.png,PNG,Figure 6A,QLP subsample evidence for EUA Return,appendix
+figures_appendix\figure_6a_qlp_subsamples_r_eua.pdf,PDF,Figure 6A,QLP subsample evidence for EUA Return,appendix
+figures_appendix\figure_6a_qlp_subsamples_r_eua.svg,SVG,Figure 6A,QLP subsample evidence for EUA Return,appendix
+figures_slides\figure_6b_qlp_subsamples_compact_r_eua.png,PNG,Figure 6B,Compact slide QLP subsample figure for EUA Return,slides
+figures_slides\figure_6b_qlp_subsamples_compact_r_eua.pdf,PDF,Figure 6B,Compact slide QLP subsample figure for EUA Return,slides
+figures_slides\figure_6b_qlp_subsamples_compact_r_eua.svg,SVG,Figure 6B,Compact slide QLP subsample figure for EUA Return,slides
+figures_appendix\figure_7_qr_subsample_significance_heatmap.png,PNG,Figure 7,QR subsample significance heatmap,appendix
+figures_appendix\figure_7_qr_subsample_significance_heatmap.pdf,PDF,Figure 7,QR subsample significance heatmap,appendix
+figures_appendix\figure_7_qr_subsample_significance_heatmap.svg,SVG,Figure 7,QR subsample significance heatmap,appendix
+figures_appendix\figure_8_qlp_significance_heatmap.png,PNG,Figure 8,QLP significance heatmap,appendix
+figures_appendix\figure_8_qlp_significance_heatmap.pdf,PDF,Figure 8,QLP significance heatmap,appendix
+figures_appendix\figure_8_qlp_significance_heatmap.svg,SVG,Figure 8,QLP significance heatmap,appendix
+methodology_flow\figure_9_methodological_workflow.png,PNG,Figure 9,Methodological workflow,paper
+methodology_flow\figure_9_methodological_workflow.pdf,PDF,Figure 9,Methodological workflow,paper
+methodology_flow\figure_9_methodological_workflow.svg,SVG,Figure 9,Methodological workflow,paper
+figures_slides\figure_10_empirical_strategy_slide.png,PNG,Figure 10,One-slide empirical strategy,slides
+figures_slides\figure_10_empirical_strategy_slide.pdf,PDF,Figure 10,One-slide empirical strategy,slides
+figures_slides\figure_10_empirical_strategy_slide.svg,SVG,Figure 10,One-slide empirical strategy,slides
