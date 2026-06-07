@@ -20,11 +20,12 @@
     fill=white,
     text=DarkGray,
     align=center,
+    text width=4.45cm,
     inner xsep=8pt,
-    inner ysep=7pt,
-    minimum width=4.65cm,
-    minimum height=1.55cm,
-    font=\small
+    inner ysep=10pt,
+    minimum width=4.95cm,
+    minimum height=1.70cm,
+    font=\footnotesize
   },
   titlebox/.style={
     font=\bfseries\footnotesize,
@@ -35,7 +36,7 @@
     inner ysep=3pt
   },
   layerlabel/.style={
-    font=\bfseries\small,
+    font=\bfseries\scriptsize,
     text=#1,
     align=left
   },
@@ -43,7 +44,9 @@
     -{Stealth[length=3.0mm,width=2.0mm]},
     very thick,
     draw=DarkGray,
-    rounded corners=4pt
+    rounded corners=7pt,
+    shorten <=2pt,
+    shorten >=2pt
   },
   softpanel/.style={
     rounded corners=8pt,
@@ -55,11 +58,9 @@
 
 \newcommand{\workflowbox}[5]{%
   \node[box=#4] (#1) at (#2) {%
-    \vspace{0.15cm}
-    {\bfseries #3}\\[2pt]
     #5
   };
-  \node[titlebox=#4, anchor=north] at ([yshift=-1.5pt]#1.north) {#3};
+  \node[titlebox=#4, anchor=south] at ([yshift=2.5pt]#1.north) {#3};
 }
 
 \begin{document}
@@ -67,89 +68,68 @@
 
 % Background layer panels.
 \begin{scope}[on background layer]
-  \node[softpanel, minimum width=15.7cm, minimum height=2.15cm] at (0, 3.95) {};
-  \node[softpanel, minimum width=15.7cm, minimum height=2.15cm] at (0, 0.55) {};
-  \node[softpanel, minimum width=15.7cm, minimum height=2.55cm] at (0,-3.10) {};
+  \node[softpanel, minimum width=16.5cm, minimum height=2.45cm] at (0, 4.25) {};
+  \node[softpanel, minimum width=16.5cm, minimum height=2.45cm] at (0, 0.45) {};
+  \node[softpanel, minimum width=16.5cm, minimum height=2.55cm] at (0,-3.55) {};
 \end{scope}
 
 % Main title.
-\node[font=\bfseries\Large, text=Navy] at (0,5.65) {Empirical Workflow};
-
-% Layer labels.
-\node[layerlabel=Navy, anchor=west] at (-7.65,4.95) {Data};
-\node[layerlabel=Green, anchor=west] at (-7.65,1.55) {Estimation};
-\node[layerlabel=Burgundy, anchor=west] at (-7.65,-2.05) {Robustness and dynamics};
-\node[layerlabel=Navy, anchor=west] at (3.72,-2.05) {Interpretation};
+\node[font=\bfseries\Large, text=Navy] at (0,5.90) {Empirical Workflow};
 
 % Layer 1: data and variable construction.
-\workflowbox{market}{-5.15,3.95}{Market data}{Navy}{%
-  STOXX 600 ESG-X; STOXX 600\\
+\workflowbox{market}{-5.45,4.25}{Market data}{Navy}{%
+  STOXX 600 ESG-X\\
+  STOXX 600\\
   VSTOXX; Bund 10Y\\
   TTF; Brent; EUA}
 
-\workflowbox{spread}{0,3.95}{ESG spread}{Navy}{%
+\workflowbox{spread}{0,4.25}{ESG spread}{Navy}{%
   \(r(\mathrm{ESG\mbox{-}X}) - r(\mathrm{STOXX\ 600})\)}
 
-\workflowbox{drivers}{5.15,3.95}{Driver transformations}{Navy}{%
+\workflowbox{drivers}{5.45,4.25}{Driver transformations}{Navy}{%
   \(\Delta\)VSTOXX; \(\Delta\)Bund 10Y\\
-  log returns for TTF, Brent and EUA}
+  log returns: TTF, Brent, EUA}
 
 % Layer 2: baseline econometric framework.
-\workflowbox{checks}{-5.15,0.55}{Pre-estimation checks}{Green}{%
+\workflowbox{checks}{-5.45,0.45}{Pre-estimation checks}{Green}{%
   ADF/PP; descriptive statistics\\
   correlations; VIF}
 
-\workflowbox{qr}{0,0.55}{Quantile Regression}{Green}{%
+\workflowbox{qr}{0,0.45}{Quantile Regression}{Green}{%
   \(\tau = 0.10, 0.25, 0.50, 0.75, 0.90\)}
 
-\workflowbox{boot}{5.15,0.55}{Moving block bootstrap}{Green}{%
+\workflowbox{boot}{5.45,0.45}{Moving block bootstrap}{Green}{%
   22-day blocks\\
   robust confidence intervals}
 
-% Layer 3: heterogeneity, dynamics and interpretation.
-\workflowbox{regime}{-5.15,-3.10}{Regime analysis}{Burgundy}{%
+% Layer 3: heterogeneity and dynamics.
+\workflowbox{regime}{-5.45,-3.55}{Regime analysis}{Burgundy}{%
   2012--2019; 2020--2022\\
   2023--2026}
 
-\workflowbox{rolling}{0,-3.10}{Rolling QR}{Burgundy}{%
+\workflowbox{rolling}{0,-3.55}{Rolling QR}{Burgundy}{%
   252-day and 504-day windows}
 
-\workflowbox{qlp}{5.15,-3.10}{Quantile Local Projections}{Burgundy}{%
+\workflowbox{qlp}{5.45,-3.55}{Quantile Local Projections}{Burgundy}{%
   \(\tau = 0.10, 0.50, 0.90\)\\
   \(h = 1, 5, 10, 20\)}
-
-\node[
-  box=Navy,
-  minimum width=5.15cm,
-  minimum height=2.0cm,
-  anchor=west
-] (interp) at (8.85,-3.10) {%
-  \vspace{0.16cm}
-  {\bfseries Economic interpretation}\\[2pt]
-  Energy-exclusion wedge\\
-  market-stress channel\\
-  European gas shock channel\\
-  ESG benchmark risk implications
-};
-\node[titlebox=Navy, anchor=north] at ([yshift=-1.5pt]interp.north) {Economic interpretation};
 
 % Arrows within layers.
 \draw[flowarrow] (market.east) -- (spread.west);
 \draw[flowarrow] (spread.east) -- (drivers.west);
-\draw[flowarrow] (drivers.south) -- ++(0,-0.65) -| (checks.north);
+\draw[flowarrow] (drivers.south) -- ++(0,-1.18)
+  -| ([xshift=-1.75cm]checks.north);
 
 \draw[flowarrow] (checks.east) -- (qr.west);
 \draw[flowarrow] (qr.east) -- (boot.west);
 
 % Split from baseline framework to robustness and dynamics.
-\draw[flowarrow] (qr.south) -- ++(0,-0.62) -- (rolling.north);
-\draw[flowarrow] (boot.south) -- ++(0,-0.62) -| (regime.north);
-\draw[flowarrow] (boot.south) -- ++(0,-0.62) -| (qlp.north);
-
-% Arrows to interpretation.
-\draw[flowarrow] (regime.east) -- ++(0.55,0) |- ([yshift=0.46cm]interp.west);
-\draw[flowarrow] (rolling.east) -- ++(0.55,0) -- ([yshift=0.00cm]interp.west);
-\draw[flowarrow] (qlp.east) -- ++(0.55,0) |- ([yshift=-0.46cm]interp.west);
+\draw[flowarrow] ([xshift=-0.45cm]qr.south) -- ++(0,-1.16)
+  -| ([xshift=-1.65cm]rolling.north);
+\draw[flowarrow] (boot.south) -- ++(0,-1.16)
+  -| ([xshift=-2.35cm]qlp.north);
+\draw[flowarrow] ([xshift=0.45cm]qr.south) -- ++(0,-1.16)
+  -| ([xshift=-1.65cm]regime.north);
 
 \end{tikzpicture}
 \end{document}
