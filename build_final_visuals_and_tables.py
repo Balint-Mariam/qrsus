@@ -952,25 +952,30 @@ def heatmap_colors(values: List[int]) -> List[str]:
 
 def plot_qr_subsample_heatmap(sheets: Dict[str, pd.DataFrame], manifest: List[dict], warnings: List[str]) -> None:
     qr_subsample_quantiles = [0.10, 0.25, 0.50, 0.75, 0.90]
-    rows = []
+    active_samples = []
     columns = []
     for sample in SUBSAMPLES:
         sheet = f"qr_{sample}"
         df = sheets.get(sheet, pd.DataFrame()).copy()
         if df.empty:
             continue
+        active_samples.append(sample)
         for q in qr_subsample_quantiles:
-            columns.append(f"{sample_label(sample)}\n{q_label(q)}")
-        for var in MAIN_VARS:
-            pass
+            columns.append(q_label(q))
     columns = list(dict.fromkeys(columns))
-    if not columns:
+    if not active_samples:
         warnings.append("Skipped Figure 7: QR subsample sheets missing.")
         return
+    columns = [q_label(q) for _sample in active_samples for q in qr_subsample_quantiles]
+    group_labels = {
+        "2012_2019": "Pre-crisis\n2012-2019",
+        "2020_2022": "COVID & energy crisis\n2020-2022",
+        "2023_present": "Post-crisis repricing\n2023-2026",
+    }
     matrix = []
     for var in MAIN_VARS:
         row_vals = []
-        for sample in SUBSAMPLES:
+        for sample in active_samples:
             df = sheets.get(f"qr_{sample}", pd.DataFrame()).copy()
             for q in qr_subsample_quantiles:
                 if df.empty:
@@ -983,7 +988,19 @@ def plot_qr_subsample_heatmap(sheets: Dict[str, pd.DataFrame], manifest: List[di
                     row_vals.append(1 if ss["coef"].iloc[0] > 0 else -1)
         matrix.append(row_vals)
 
-    draw_heatmap(matrix, [DISPLAY_NAMES[v] for v in MAIN_VARS], columns, "QR Subsample Significance Summary", SUBDIRS["figures_appendix"], "figure_7_qr_subsample_significance_heatmap", manifest, "Figure 7", "QR subsample significance heatmap across all estimated quantiles")
+    draw_heatmap(
+        matrix,
+        [DISPLAY_NAMES[v] for v in MAIN_VARS],
+        columns,
+        "QR Subsample Significance Summary",
+        SUBDIRS["figures_appendix"],
+        "figure_7_qr_subsample_significance_heatmap",
+        manifest,
+        "Figure 7",
+        "QR subsample significance heatmap across all estimated quantiles",
+        group_labels=[group_labels.get(sample, sample_label(sample)) for sample in active_samples],
+        group_size=len(qr_subsample_quantiles),
+    )
 
 
 def plot_qlp_significance_heatmap(sheets: Dict[str, pd.DataFrame], manifest: List[dict], warnings: List[str]) -> None:
@@ -1022,16 +1039,28 @@ def draw_heatmap(
     manifest: List[dict],
     number: str,
     description: str,
+    group_labels: Optional[List[str]] = None,
+    group_size: Optional[int] = None,
 ) -> None:
     fig_width = max(13, 3.5 + 0.85 * len(xlabels))
     fig, ax = plt.subplots(figsize=(fig_width, 5.5))
-    draw_heatmap_on_axis(ax, matrix, ylabels, xlabels, title)
-    fig.tight_layout()
+    draw_heatmap_on_axis(ax, matrix, ylabels, xlabels, title, group_labels=group_labels, group_size=group_size)
+    fig.tight_layout(rect=(0, 0.08, 1, 1))
+    if group_labels:
+        fig.subplots_adjust(bottom=0.26)
     export_figure(fig, out_dir, basename, manifest, number, description, "appendix")
     plt.close(fig)
 
 
-def draw_heatmap_on_axis(ax, matrix: List[List[int]], ylabels: List[str], xlabels: List[str], title: str) -> None:
+def draw_heatmap_on_axis(
+    ax,
+    matrix: List[List[int]],
+    ylabels: List[str],
+    xlabels: List[str],
+    title: str,
+    group_labels: Optional[List[str]] = None,
+    group_size: Optional[int] = None,
+) -> None:
     color_map = {1: COLORS["green"], -1: COLORS["burgundy"], 0: COLORS["very_light_gray"]}
     arr = np.array(matrix)
     for i in range(arr.shape[0]):
@@ -1047,6 +1076,23 @@ def draw_heatmap_on_axis(ax, matrix: List[List[int]], ylabels: List[str], xlabel
     ax.set_yticks(np.arange(arr.shape[0]) + 0.5)
     ax.set_xticklabels(xlabels, rotation=45, ha="right", fontsize=8)
     ax.set_yticklabels(ylabels, fontsize=9)
+    if group_labels and group_size:
+        for boundary in range(group_size, arr.shape[1], group_size):
+            ax.axvline(boundary, color=COLORS["gray"], alpha=0.35, linewidth=1.0)
+        for idx, label in enumerate(group_labels):
+            center = idx * group_size + group_size / 2
+            ax.text(
+                center,
+                -0.23,
+                label,
+                ha="center",
+                va="top",
+                transform=ax.get_xaxis_transform(),
+                color=COLORS["axis"],
+                fontsize=9,
+                fontweight="bold",
+                clip_on=False,
+            )
     ax.invert_yaxis()
     ax.set_title(title, color=COLORS["navy"])
     ax.tick_params(length=0)
