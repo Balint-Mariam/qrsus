@@ -1,0 +1,74 @@
+Economic Magnitude / Standardized Shock Effects Summary
+======================================================
+
+Formula for non-standardized QR and rolling QR coefficients:
+impact_1sd_bps = beta * sd(driver) * 10000
+
+QLP note:
+Existing QLP models use standardize_shocks=True, so main-driver QLP coefficients
+are already responses to +1 sample-standard-deviation shocks. Therefore QLP
+economic magnitudes are converted to bps as coef * 10000, not multiplied by SD again.
+
+Interpretation notes:
+- QR impacts are contemporaneous changes in the daily ESG-conventional spread.
+- QLP impacts are cumulative future ESG-conventional spread changes over horizon h.
+- Effects are economically scaled conditional associations, not causal impulse responses.
+
+Full-sample driver standard deviations:
+- ΔVSTOXX (d_vstoxx): 1.68969681
+- ΔBund 10Y (d_bund): 0.04399637
+- TTF Return (r_ttf): 0.04100888
+- Brent Return (r_brent): 0.02374112
+- EUA Return (r_eua): 0.03047773
+
+Bund scenario unit note: Bund yield appears measured in percentage points; 10 bps = 0.10.
+
+Top 10 absolute QR full-sample +1sd impacts (bps):
+- Brent Return q0.90: -0.61 bps; significant=True
+- Brent Return q0.10: -0.56 bps; significant=False
+- Brent Return q0.75: -0.42 bps; significant=True
+- TTF Return q0.90: -0.38 bps; significant=True
+- EUA Return q0.10: 0.34 bps; significant=False
+- ΔVSTOXX q0.25: -0.34 bps; significant=True
+- ΔVSTOXX q0.10: -0.33 bps; significant=True
+- Brent Return q0.25: -0.32 bps; significant=True
+- ΔVSTOXX q0.50: -0.27 bps; significant=True
+- Brent Return q0.50: -0.27 bps; significant=True
+
+Top 10 absolute QLP cumulative +1sd impacts (bps):
+- 2023_present EUA Return h20 q0.10: 4.48 bps; significant=False
+- 2023_present ΔBund 10Y h20 q0.10: 4.17 bps; significant=False
+- 2023_present Brent Return h5 q0.10: -3.01 bps; significant=False
+- 2023_present TTF Return h10 q0.10: -2.87 bps; significant=False
+- 2023_present TTF Return h20 q0.90: -2.29 bps; significant=False
+- 2023_present Brent Return h20 q0.10: -2.25 bps; significant=False
+- 2023_present Brent Return h10 q0.90: -2.17 bps; significant=False
+- 2023_present ΔVSTOXX h10 q0.90: 2.07 bps; significant=False
+- 2023_present Brent Return h10 q0.10: -1.89 bps; significant=False
+- 2023_present Brent Return h5 q0.90: -1.63 bps; significant=False
+
+Excel sheets added:
+- driver_shock_sizes
+- econmag_qr_full
+- econmag_qr_full_key
+- econmag_qr_sub_fullsd
+- econmag_qr_sub_localsd
+- econmag_qr_sub_summary
+- econmag_qlp_all
+- econmag_qlp_full_key
+- econmag_qlp_sub_summary
+- rolling_252_econmag
+- rolling_504_econmag
+- econmag_qr_scenarios
+- econmag_qr_scenarios_key
+
+Final visual package files:
+- C:\Users\user\Desktop\Doctorat\simpozion\final_visual_package\tables_excel\economic_magnitude_tables.xlsx
+- C:\Users\user\Desktop\Doctorat\simpozion\final_visual_package\tables_png\table_econmag_qr_full_key.png
+- C:\Users\user\Desktop\Doctorat\simpozion\final_visual_package\tables_png\table_econmag_qlp_full_key.png
+- C:\Users\user\Desktop\Doctorat\simpozion\final_visual_package\tables_png\table_econmag_qr_scenarios_key.png
+- C:\Users\user\Desktop\Doctorat\simpozion\final_visual_package\figures_main\figure_econmag_qr_full_bps.png
+- C:\Users\user\Desktop\Doctorat\simpozion\final_visual_package\figures_main\figure_econmag_qlp_full_bps.png
+
+Warnings / skipped outputs:
+- None

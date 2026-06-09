@@ -1,14 +1,19 @@
 import numpy as np
 import pandas as pd
 import matplotlib
+import warnings
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from pathlib import Path
 from statsmodels.tsa.stattools import adfuller
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from statsmodels.tools.tools import add_constant
 from statsmodels.regression.quantile_regression import QuantReg
 from statsmodels.stats.diagnostic import acorr_ljungbox, het_arch
 from statsmodels.stats.stattools import jarque_bera
+from statsmodels.tools.sm_exceptions import IterationLimitWarning
+
+warnings.filterwarnings("ignore", category=IterationLimitWarning)
 
 try:
     from arch.unitroot import PhillipsPerron
@@ -388,6 +393,681 @@ def run_qlp_quantile(
     return pd.DataFrame(qlp_rows)
 
 
+# Economic magnitude / standardized shock effects.
+DRIVER_COLS = ["d_vstoxx", "d_bund", "r_ttf", "r_brent", "r_eua"]
+DRIVER_DISPLAY = {
+    "d_vstoxx": "\u0394VSTOXX",
+    "d_bund": "\u0394Bund 10Y",
+    "r_ttf": "TTF Return",
+    "r_brent": "Brent Return",
+    "r_eua": "EUA Return",
+}
+
+
+def console_driver_name(var):
+    return DRIVER_DISPLAY[var].replace("\u0394", "Delta ")
+
+
+def q_label(q):
+    return f"q{float(q):.2f}"
+
+
+def compute_driver_standard_deviations(out_df, driver_cols):
+    missing = [col for col in driver_cols if col not in out_df.columns]
+    if missing:
+        raise ValueError(f"Missing drivers for shock-size computation: {missing}")
+
+    sd_map = {}
+    for col in driver_cols:
+        sd = out_df[col].dropna().std(ddof=1)
+        if pd.isna(sd) or sd <= 0:
+            raise ValueError(f"Invalid standard deviation for {col}: {sd}")
+        sd_map[col] = float(sd)
+    return sd_map
+
+
+def build_driver_shock_sizes(out_df, subsamples, driver_cols):
+    rows = []
+    sd_maps = {"full": compute_driver_standard_deviations(out_df, driver_cols)}
+
+    for label, (start, end) in subsamples.items():
+        sub = out_df.loc[start:] if end is None else out_df.loc[start:end]
+        if len(sub) == 0:
+            continue
+        sd_maps[label] = compute_driver_standard_deviations(sub, driver_cols)
+
+    for label, sd_map in sd_maps.items():
+        for var, sd_value in sd_map.items():
+            rows.append({
+                "sample_label": label,
+                "variable": var,
+                "display_name": DRIVER_DISPLAY[var],
+                "sd_value": sd_value,
+                "shock_label": "+1 standard deviation shock",
+                "interpretation_unit": "basis points of ESG-conventional spread",
+            })
+
+    return pd.DataFrame(rows), sd_maps
+
+
+def ci_excludes_zero(row):
+    ci_low = row.get("ci_low")
+    ci_high = row.get("ci_high")
+    return bool(pd.notna(ci_low) and pd.notna(ci_high) and ((ci_low > 0) or (ci_high < 0)))
+
+
+def add_economic_magnitude(
+    results_df,
+    sd_map,
+    sample_label=None,
+    sd_type="full_sample_sd",
+    coef_col="coef",
+    param_col="param",
+    qlp_shocks_already_standardized=False,
+):
+    if results_df is None or results_df.empty:
+        return pd.DataFrame()
+
+    work = results_df.copy()
+    work = work[work[param_col].isin(DRIVER_COLS)].copy()
+    if work.empty:
+        return work
+
+    if sample_label is not None and "sample_label" not in work.columns:
+        work["sample_label"] = sample_label
+
+    work["display_name"] = work[param_col].map(DRIVER_DISPLAY)
+    work["sd_type"] = sd_type
+    work["sd_value"] = work[param_col].map(sd_map)
+
+    if qlp_shocks_already_standardized:
+        # Existing QLP was estimated with standardize_shocks=True. Its main
+        # driver coefficients are already responses to +1 sample-standard-
+        # deviation shocks, so multiplying by SD again would double-scale them.
+        work["impact_1sd"] = work[coef_col]
+        if "ci_low" in work.columns:
+            work["ci_low_1sd"] = work["ci_low"]
+            work["ci_high_1sd"] = work["ci_high"]
+        work["scaling_note"] = "QLP shocks already standardized in model"
+    else:
+        work["impact_1sd"] = work[coef_col] * work["sd_value"]
+        if "ci_low" in work.columns:
+            work["ci_low_1sd"] = work["ci_low"] * work["sd_value"]
+            work["ci_high_1sd"] = work["ci_high"] * work["sd_value"]
+        work["scaling_note"] = "coefficient multiplied by driver SD"
+
+    work["impact_1sd_bps"] = work["impact_1sd"] * 10000
+    if "ci_low_1sd" in work.columns:
+        work["ci_low_1sd_bps"] = work["ci_low_1sd"] * 10000
+        work["ci_high_1sd_bps"] = work["ci_high_1sd"] * 10000
+    else:
+        work["ci_low_1sd_bps"] = np.nan
+        work["ci_high_1sd_bps"] = np.nan
+
+    work["significant_95"] = work.apply(ci_excludes_zero, axis=1) if "ci_low" in work.columns else np.nan
+
+    impact_cols = ["impact_1sd", "impact_1sd_bps", "ci_low_1sd_bps", "ci_high_1sd_bps"]
+    for col in impact_cols:
+        if col in work.columns and np.isinf(work[col].to_numpy(dtype=float, copy=True)).any():
+            raise ValueError(f"Infinite values detected in {col}")
+
+    return work
+
+
+def format_ci_bps(row):
+    low = row.get("ci_low_1sd_bps")
+    high = row.get("ci_high_1sd_bps")
+    if pd.isna(low) or pd.isna(high):
+        return ""
+    return f"[{low:.2f}, {high:.2f}]"
+
+
+def effect_direction(value):
+    if pd.isna(value):
+        return "not available"
+    if value < 0:
+        return "compresses"
+    if value > 0:
+        return "widens"
+    return "does not change"
+
+
+def driver_interpretation(driver, impact_bps, context="qr"):
+    direction = effect_direction(impact_bps)
+    if context == "qlp":
+        base = "changes the cumulative ESG-conventional spread"
+    else:
+        base = "changes the daily ESG-conventional spread"
+
+    if driver == "r_brent":
+        channel = "energy-exclusion wedge"
+    elif driver == "d_vstoxx":
+        channel = "market-stress channel"
+    elif driver == "r_ttf":
+        channel = "European gas shock channel"
+    elif driver == "d_bund":
+        channel = "interest-rate channel"
+    else:
+        channel = "carbon-price channel"
+
+    return f"A +1sd {DRIVER_DISPLAY[driver]} shock {direction} the spread ({channel})."
+
+
+def make_qr_full_key(econmag_qr_full):
+    if econmag_qr_full.empty:
+        return pd.DataFrame()
+
+    key = econmag_qr_full[econmag_qr_full["significant_95"]].copy()
+    if key.empty:
+        return pd.DataFrame(columns=[
+            "Driver",
+            "Quantile",
+            "Shock",
+            "Impact on ESG spread (bps)",
+            "95% CI (bps)",
+            "Interpretation",
+        ])
+
+    rows = []
+    for _, r in key.sort_values(["param", "quantile"]).iterrows():
+        rows.append({
+            "Driver": r["display_name"],
+            "Quantile": q_label(r["quantile"]),
+            "Shock": "+1 standard deviation shock",
+            "Impact on ESG spread (bps)": r["impact_1sd_bps"],
+            "95% CI (bps)": format_ci_bps(r),
+            "Interpretation": driver_interpretation(r["param"], r["impact_1sd_bps"], "qr"),
+        })
+    return pd.DataFrame(rows)
+
+
+def summarize_significant_effects(econmag_df, sample_col="sample_label", context="qr"):
+    if econmag_df is None or econmag_df.empty:
+        return pd.DataFrame()
+
+    rows = []
+    group_cols = [sample_col, "param"] if sample_col in econmag_df.columns else ["param"]
+    for keys, grp in econmag_df.groupby(group_cols):
+        if isinstance(keys, tuple):
+            sample, driver = keys
+        else:
+            sample, driver = "full", keys
+        sig = grp[grp["significant_95"] == True].copy()
+        if sig.empty:
+            continue
+
+        if "horizon" in sig.columns:
+            combos = ", ".join(
+                f"h{int(r.horizon)}-{q_label(r.quantile)}"
+                for r in sig.sort_values(["horizon", "quantile"]).itertuples()
+            )
+            sig_col_name = "Significant horizons/quantiles"
+        else:
+            combos = ", ".join(q_label(q) for q in sorted(sig["quantile"].unique()))
+            sig_col_name = "Significant quantiles"
+
+        signs = np.sign(sig["impact_1sd_bps"])
+        if (signs > 0).all():
+            sign_pattern = "positive"
+        elif (signs < 0).all():
+            sign_pattern = "negative"
+        else:
+            sign_pattern = "mixed"
+
+        rows.append({
+            "Sample": sample,
+            "Driver": DRIVER_DISPLAY[driver],
+            sig_col_name: combos,
+            "Sign pattern": sign_pattern,
+            "Avg. significant 1sd impact (bps)": sig["impact_1sd_bps"].abs().mean(),
+            "Interpretation": driver_interpretation(driver, sig["impact_1sd_bps"].mean(), context),
+        })
+
+    return pd.DataFrame(rows)
+
+
+def make_qlp_full_key(econmag_qlp_all):
+    if econmag_qlp_all.empty:
+        return pd.DataFrame()
+
+    key = econmag_qlp_all[
+        (econmag_qlp_all["sample_label"] == "full") &
+        (econmag_qlp_all["significant_95"] == True)
+    ].copy()
+    if key.empty:
+        return pd.DataFrame(columns=[
+            "Driver",
+            "Horizon",
+            "Quantile",
+            "Shock",
+            "Cumulative impact (bps)",
+            "95% CI (bps)",
+            "Interpretation",
+        ])
+
+    rows = []
+    for _, r in key.sort_values(["param", "horizon", "quantile"]).iterrows():
+        rows.append({
+            "Driver": r["display_name"],
+            "Horizon": int(r["horizon"]),
+            "Quantile": q_label(r["quantile"]),
+            "Shock": "+1 standard deviation shock",
+            "Cumulative impact (bps)": r["impact_1sd_bps"],
+            "95% CI (bps)": format_ci_bps(r),
+            "Interpretation": (
+                f"A +1sd {r['display_name']} shock changes the cumulative ESG-conventional "
+                f"spread over the next {int(r['horizon'])} days by {r['impact_1sd_bps']:.2f} bps."
+            ),
+        })
+    return pd.DataFrame(rows)
+
+
+def detect_bund_scenario(raw_df, bund_col):
+    median_level = raw_df[bund_col].dropna().abs().median()
+    if pd.isna(median_level):
+        return 0.10, "Bund unit assumed percentage points; 10 bps = 0.10."
+    if median_level > 0.5:
+        return 0.10, "Bund yield appears measured in percentage points; 10 bps = 0.10."
+    return 0.001, "Bund yield appears measured in decimal units; 10 bps = 0.001."
+
+
+def build_scenario_tables(qr_results, raw_df, bund_col, include_all_scenarios=False):
+    if qr_results.empty:
+        return pd.DataFrame(), pd.DataFrame(), ""
+
+    bund_shock, bund_note = detect_bund_scenario(raw_df, bund_col)
+    scenarios = {
+        "r_brent": ("Brent +3% daily shock", 0.03),
+        "r_ttf": ("TTF +5% daily shock", 0.05),
+        "r_eua": ("EUA +3% daily shock", 0.03),
+        "d_vstoxx": ("VSTOXX +5 index points", 5.0),
+        "d_bund": ("Bund 10Y +10 bps", bund_shock),
+    }
+
+    rows = []
+    base = qr_results[qr_results["param"].isin(DRIVER_COLS)].copy()
+    for _, r in base.iterrows():
+        label, shock_value = scenarios[r["param"]]
+        impact = r["coef"] * shock_value
+        rows.append({
+            "quantile": r["quantile"],
+            "param": r["param"],
+            "display_name": DRIVER_DISPLAY[r["param"]],
+            "scenario_label": label,
+            "shock_value": shock_value,
+            "coef": r["coef"],
+            "impact_scenario": impact,
+            "impact_scenario_bps": impact * 10000,
+            "ci_low_scenario_bps": r["ci_low"] * shock_value * 10000,
+            "ci_high_scenario_bps": r["ci_high"] * shock_value * 10000,
+            "significant_95": ci_excludes_zero(r),
+            "unit_note": bund_note if r["param"] == "d_bund" else "",
+        })
+    scenario_df = pd.DataFrame(rows)
+
+    focus = ["r_brent", "d_vstoxx", "r_ttf"]
+    key = scenario_df[scenario_df["param"].isin(focus)].copy()
+    if not include_all_scenarios:
+        key = key[key["significant_95"] == True]
+
+    key_rows = []
+    for _, r in key.sort_values(["param", "quantile"]).iterrows():
+        key_rows.append({
+            "Driver": r["display_name"],
+            "Quantile": q_label(r["quantile"]),
+            "Scenario": r["scenario_label"],
+            "Impact on ESG spread (bps)": r["impact_scenario_bps"],
+            "95% CI (bps)": f"[{r['ci_low_scenario_bps']:.2f}, {r['ci_high_scenario_bps']:.2f}]",
+            "Interpretation": driver_interpretation(r["param"], r["impact_scenario_bps"], "qr"),
+        })
+    return scenario_df, pd.DataFrame(key_rows), bund_note
+
+
+def build_economic_magnitude_outputs(
+    out_df,
+    raw_df,
+    subsamples,
+    qr_results,
+    qr_sub_results,
+    qlp_key_results,
+    rolling_252,
+    rolling_504,
+    bund_col,
+):
+    shock_sizes, sd_maps = build_driver_shock_sizes(out_df, subsamples, DRIVER_COLS)
+
+    econmag_qr_full = add_economic_magnitude(
+        qr_results,
+        sd_maps["full"],
+        sample_label="full",
+        sd_type="full_sample_sd",
+    )
+    econmag_qr_full_key = make_qr_full_key(econmag_qr_full)
+
+    sub_full_frames = []
+    sub_local_frames = []
+    for label, qr_sub in qr_sub_results.items():
+        if qr_sub.empty:
+            continue
+        full_scaled = add_economic_magnitude(
+            qr_sub,
+            sd_maps["full"],
+            sample_label=label,
+            sd_type="full_sample_sd",
+        )
+        local_scaled = add_economic_magnitude(
+            qr_sub,
+            sd_maps[label],
+            sample_label=label,
+            sd_type="local_sample_sd",
+        )
+        sub_full_frames.append(full_scaled)
+        sub_local_frames.append(local_scaled)
+
+    econmag_qr_sub_fullsd = pd.concat(sub_full_frames, ignore_index=True) if sub_full_frames else pd.DataFrame()
+    econmag_qr_sub_localsd = pd.concat(sub_local_frames, ignore_index=True) if sub_local_frames else pd.DataFrame()
+    econmag_qr_sub_summary = summarize_significant_effects(econmag_qr_sub_localsd, context="qr")
+
+    if qlp_key_results is not None and not qlp_key_results.empty:
+        qlp_frames = []
+        for label in ["full"] + list(subsamples.keys()):
+            part = qlp_key_results[qlp_key_results["sample_label"] == label].copy()
+            if part.empty:
+                continue
+            qlp_frames.append(add_economic_magnitude(
+                part,
+                sd_maps.get(label, sd_maps["full"]),
+                sample_label=label,
+                sd_type="model_standardized_shock",
+                qlp_shocks_already_standardized=True,
+            ))
+        econmag_qlp_all = pd.concat(qlp_frames, ignore_index=True) if qlp_frames else pd.DataFrame()
+    else:
+        econmag_qlp_all = pd.DataFrame()
+
+    econmag_qlp_full_key = make_qlp_full_key(econmag_qlp_all)
+    econmag_qlp_sub_summary = summarize_significant_effects(
+        econmag_qlp_all[econmag_qlp_all["sample_label"] != "full"].copy()
+        if not econmag_qlp_all.empty else pd.DataFrame(),
+        context="qlp",
+    )
+
+    rolling_252_econmag = add_economic_magnitude(
+        rolling_252,
+        sd_maps["full"],
+        sd_type="full_sample_sd",
+    )
+    rolling_504_econmag = add_economic_magnitude(
+        rolling_504,
+        sd_maps["full"],
+        sd_type="full_sample_sd",
+    )
+
+    scenarios, scenarios_key, bund_note = build_scenario_tables(qr_results, raw_df, bund_col)
+
+    outputs = {
+        "driver_shock_sizes": shock_sizes,
+        "econmag_qr_full": econmag_qr_full,
+        "econmag_qr_full_key": econmag_qr_full_key,
+        "econmag_qr_sub_fullsd": econmag_qr_sub_fullsd,
+        "econmag_qr_sub_localsd": econmag_qr_sub_localsd,
+        "econmag_qr_sub_summary": econmag_qr_sub_summary,
+        "econmag_qlp_all": econmag_qlp_all,
+        "econmag_qlp_full_key": econmag_qlp_full_key,
+        "econmag_qlp_sub_summary": econmag_qlp_sub_summary,
+        "rolling_252_econmag": rolling_252_econmag,
+        "rolling_504_econmag": rolling_504_econmag,
+        "econmag_qr_scenarios": scenarios,
+        "econmag_qr_scenarios_key": scenarios_key,
+    }
+    return outputs, sd_maps, bund_note
+
+
+def render_table_png(df, path, title, max_rows=18):
+    if df is None or df.empty:
+        return False
+
+    display = df.head(max_rows).copy()
+    for col in display.columns:
+        if pd.api.types.is_float_dtype(display[col]):
+            display[col] = display[col].map(lambda x: "" if pd.isna(x) else f"{x:.2f}")
+
+    fig_height = max(2.0, 0.38 * (len(display) + 2))
+    fig_width = min(15.0, max(8.0, 1.25 * len(display.columns)))
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+    ax.axis("off")
+    ax.set_title(title, fontsize=12, fontweight="bold", color="#26418F", pad=12)
+    table = ax.table(
+        cellText=display.values,
+        colLabels=display.columns,
+        cellLoc="center",
+        colLoc="center",
+        loc="center",
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(7)
+    table.scale(1.0, 1.25)
+    for (row, col), cell in table.get_celld().items():
+        cell.set_edgecolor("#D9D9D9")
+        if row == 0:
+            cell.set_facecolor("#26418F")
+            cell.set_text_props(color="white", weight="bold")
+        else:
+            cell.set_facecolor("white")
+    fig.tight_layout()
+    fig.savefig(path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    return True
+
+
+def export_econ_figure(fig, out_dir, base):
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for ext in ["png", "pdf", "svg"]:
+        path = out_dir / f"{base}.{ext}"
+        if ext == "png":
+            fig.savefig(path, dpi=300, bbox_inches="tight")
+        else:
+            fig.savefig(path, bbox_inches="tight")
+
+
+def plot_econmag_qr_full(econmag_qr_full, out_dir):
+    sig = econmag_qr_full[econmag_qr_full["significant_95"] == True].copy()
+    if sig.empty:
+        return 0
+
+    sig = sig.sort_values("impact_1sd_bps")
+    labels = [f"{DRIVER_DISPLAY[p]} {q_label(q)}" for p, q in zip(sig["param"], sig["quantile"])]
+    colors = ["#86BC25" if v > 0 else "#B5121B" for v in sig["impact_1sd_bps"]]
+    fig, ax = plt.subplots(figsize=(11, 5.8))
+    ax.bar(range(len(sig)), sig["impact_1sd_bps"], color=colors)
+    ax.axhline(0, color="#222222", linewidth=1, linestyle="--")
+    ax.set_xticks(range(len(sig)))
+    ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
+    ax.set_ylabel("Impact of +1sd shock (bps)")
+    ax.set_title("Economic Magnitude of Full-Sample QR Effects", color="#26418F")
+    ax.grid(axis="y", color="#D9D9D9", alpha=0.45)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    fig.tight_layout()
+    export_econ_figure(fig, out_dir, "figure_econmag_qr_full_bps")
+    plt.close(fig)
+    return 3
+
+
+def plot_econmag_qlp_full(econmag_qlp_all, out_dir):
+    full = econmag_qlp_all[
+        (econmag_qlp_all["sample_label"] == "full") &
+        (econmag_qlp_all["significant_95"] == True)
+    ].copy()
+    if full.empty:
+        return 0
+
+    colors = {
+        "d_vstoxx": "#26418F",
+        "d_bund": "#5B5B5B",
+        "r_ttf": "#ED7D31",
+        "r_brent": "#B5121B",
+        "r_eua": "#86BC25",
+    }
+    fig, ax = plt.subplots(figsize=(10, 5.8))
+    for var in DRIVER_COLS:
+        vdf = full[full["param"] == var].copy()
+        if vdf.empty:
+            continue
+        # Plot significant cumulative effects as points; horizontal jitter keeps
+        # multiple quantiles at the same horizon readable.
+        for q, offset in [(0.1, -0.35), (0.5, 0.0), (0.9, 0.35)]:
+            qdf = vdf[np.isclose(vdf["quantile"], q)]
+            if qdf.empty:
+                continue
+            ax.scatter(
+                qdf["horizon"] + offset,
+                qdf["impact_1sd_bps"],
+                s=45,
+                color=colors[var],
+                label=DRIVER_DISPLAY[var] if q == 0.1 else None,
+                alpha=0.9,
+            )
+    ax.axhline(0, color="#222222", linewidth=1, linestyle="--")
+    ax.set_xticks([1, 5, 10, 20])
+    ax.set_xlabel("Horizon")
+    ax.set_ylabel("Cumulative impact of +1sd shock (bps)")
+    ax.set_title("Economic Magnitude of Significant QLP Effects", color="#26418F")
+    ax.grid(axis="y", color="#D9D9D9", alpha=0.45)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.legend(frameon=False, fontsize=8, ncol=2)
+    fig.tight_layout()
+    export_econ_figure(fig, out_dir, "figure_econmag_qlp_full_bps")
+    plt.close(fig)
+    return 3
+
+
+def write_final_visual_package_econmag(outputs, final_dir):
+    final_dir = Path(final_dir)
+    if not final_dir.exists():
+        return 0, 0, []
+
+    tables_excel_dir = final_dir / "tables_excel"
+    tables_png_dir = final_dir / "tables_png"
+    figures_main_dir = final_dir / "figures_main"
+    tables_excel_dir.mkdir(parents=True, exist_ok=True)
+    tables_png_dir.mkdir(parents=True, exist_ok=True)
+    figures_main_dir.mkdir(parents=True, exist_ok=True)
+
+    table_outputs = {
+        "qr_full_key": outputs.get("econmag_qr_full_key", pd.DataFrame()),
+        "qlp_full_key": outputs.get("econmag_qlp_full_key", pd.DataFrame()),
+        "qr_scenarios_key": outputs.get("econmag_qr_scenarios_key", pd.DataFrame()),
+    }
+
+    table_count = 0
+    excel_path = tables_excel_dir / "economic_magnitude_tables.xlsx"
+    try:
+        with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
+            for sheet, table in table_outputs.items():
+                table.to_excel(writer, sheet_name=sheet[:31], index=False)
+                table_count += 1
+    except Exception:
+        with pd.ExcelWriter(excel_path) as writer:
+            for sheet, table in table_outputs.items():
+                table.to_excel(writer, sheet_name=sheet[:31], index=False)
+                table_count += 1
+
+    png_tables = [
+        ("table_econmag_qr_full_key.png", "QR Full Sample: +1sd Effects", table_outputs["qr_full_key"]),
+        ("table_econmag_qlp_full_key.png", "QLP Full Sample: +1sd Cumulative Effects", table_outputs["qlp_full_key"]),
+        ("table_econmag_qr_scenarios_key.png", "QR Scenario-Based Effects", table_outputs["qr_scenarios_key"]),
+    ]
+    for filename, title, table in png_tables:
+        if render_table_png(table, tables_png_dir / filename, title):
+            table_count += 1
+
+    figure_count = 0
+    if "econmag_qr_full" in outputs:
+        figure_count += plot_econmag_qr_full(outputs["econmag_qr_full"], figures_main_dir)
+    if "econmag_qlp_all" in outputs:
+        figure_count += plot_econmag_qlp_full(outputs["econmag_qlp_all"], figures_main_dir)
+
+    generated = [
+        str(excel_path),
+        str(tables_png_dir / "table_econmag_qr_full_key.png"),
+        str(tables_png_dir / "table_econmag_qlp_full_key.png"),
+        str(tables_png_dir / "table_econmag_qr_scenarios_key.png"),
+        str(figures_main_dir / "figure_econmag_qr_full_bps.png"),
+        str(figures_main_dir / "figure_econmag_qlp_full_bps.png"),
+    ]
+    return table_count, figure_count, generated
+
+
+def write_economic_magnitude_summary(summary_path, outputs, sd_maps, bund_note, generated_visuals, warnings):
+    lines = []
+    lines.append("Economic Magnitude / Standardized Shock Effects Summary")
+    lines.append("======================================================")
+    lines.append("")
+    lines.append("Formula for non-standardized QR and rolling QR coefficients:")
+    lines.append("impact_1sd_bps = beta * sd(driver) * 10000")
+    lines.append("")
+    lines.append("QLP note:")
+    lines.append("Existing QLP models use standardize_shocks=True, so main-driver QLP coefficients")
+    lines.append("are already responses to +1 sample-standard-deviation shocks. Therefore QLP")
+    lines.append("economic magnitudes are converted to bps as coef * 10000, not multiplied by SD again.")
+    lines.append("")
+    lines.append("Interpretation notes:")
+    lines.append("- QR impacts are contemporaneous changes in the daily ESG-conventional spread.")
+    lines.append("- QLP impacts are cumulative future ESG-conventional spread changes over horizon h.")
+    lines.append("- Effects are economically scaled conditional associations, not causal impulse responses.")
+    lines.append("")
+    lines.append("Full-sample driver standard deviations:")
+    for var, sd in sd_maps.get("full", {}).items():
+        lines.append(f"- {DRIVER_DISPLAY[var]} ({var}): {sd:.8f}")
+    lines.append("")
+    if bund_note:
+        lines.append(f"Bund scenario unit note: {bund_note}")
+        lines.append("")
+
+    qr_full = outputs.get("econmag_qr_full", pd.DataFrame())
+    if not qr_full.empty:
+        lines.append("Top 10 absolute QR full-sample +1sd impacts (bps):")
+        top = qr_full.reindex(qr_full["impact_1sd_bps"].abs().sort_values(ascending=False).index).head(10)
+        for _, r in top.iterrows():
+            lines.append(
+                f"- {DRIVER_DISPLAY[r['param']]} {q_label(r['quantile'])}: "
+                f"{r['impact_1sd_bps']:.2f} bps; significant={bool(r['significant_95'])}"
+            )
+        lines.append("")
+
+    qlp = outputs.get("econmag_qlp_all", pd.DataFrame())
+    if not qlp.empty:
+        lines.append("Top 10 absolute QLP cumulative +1sd impacts (bps):")
+        top = qlp.reindex(qlp["impact_1sd_bps"].abs().sort_values(ascending=False).index).head(10)
+        for _, r in top.iterrows():
+            lines.append(
+                f"- {r['sample_label']} {DRIVER_DISPLAY[r['param']]} h{int(r['horizon'])} "
+                f"{q_label(r['quantile'])}: {r['impact_1sd_bps']:.2f} bps; "
+                f"significant={bool(r['significant_95'])}"
+            )
+        lines.append("")
+
+    lines.append("Excel sheets added:")
+    for sheet in outputs:
+        lines.append(f"- {sheet}")
+    lines.append("")
+    lines.append("Final visual package files:")
+    for item in generated_visuals:
+        lines.append(f"- {item}")
+    lines.append("")
+    lines.append("Warnings / skipped outputs:")
+    if warnings:
+        for warning in warnings:
+            lines.append(f"- {warning}")
+    else:
+        lines.append("- None")
+
+    with open(summary_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+
+
 qr_results, qr_pseudo_r2, qd_results, diag_results = run_qr_block_bootstrap(out, "full")
 print("\nQuantile Regression results:")
 print(qr_results)
@@ -410,6 +1090,14 @@ out_dir = out_base.rsplit("\\", 1)[0]
 qlp_full = pd.DataFrame()
 qlp_sub_results = {}
 qlp_key_results = pd.DataFrame()
+qr_sub_results = {}
+economic_outputs = {}
+economic_sd_maps = {}
+economic_bund_note = ""
+economic_warnings = []
+economic_table_count = 0
+economic_figure_count = 0
+economic_generated_visuals = []
 
 try:
     writer = pd.ExcelWriter(out_xlsx, engine="xlsxwriter")
@@ -435,6 +1123,7 @@ with writer as w:
         if len(sub) < 50:
             continue
         qr_s, r2_s, qd_s, diag_s = run_qr_block_bootstrap(sub, label, B_override=300)
+        qr_sub_results[label] = qr_s
         qr_s.to_excel(w, sheet_name=f"qr_{label}", index=False)
         r2_s.to_excel(w, sheet_name=f"r2_{label}", index=False)
         qd_s.to_excel(w, sheet_name=f"qd_{label}", index=False)
@@ -487,6 +1176,49 @@ with writer as w:
     else:
         qlp_key_results = pd.DataFrame()
     qlp_key_results.to_excel(w, sheet_name="qlp_key_results", index=False)
+
+    # Economic magnitude / standardized shock effects.
+    economic_outputs, economic_sd_maps, economic_bund_note = build_economic_magnitude_outputs(
+        out_df=out,
+        raw_df=df,
+        subsamples=subsamples,
+        qr_results=qr_results,
+        qr_sub_results=qr_sub_results,
+        qlp_key_results=qlp_key_results,
+        rolling_252=rolling_252,
+        rolling_504=rolling_504,
+        bund_col=col_bund,
+    )
+    for sheet_name, sheet_df in economic_outputs.items():
+        if sheet_df is None:
+            economic_warnings.append(f"Skipped {sheet_name}: object is None.")
+            continue
+        sheet_df.to_excel(w, sheet_name=sheet_name, index=False)
+
+economic_summary_path = f"{out_dir}\\economic_magnitude_summary.txt"
+final_visual_dir = Path(in_path).resolve().parent / "final_visual_package"
+if economic_outputs:
+    economic_table_count, economic_figure_count, economic_generated_visuals = write_final_visual_package_econmag(
+        economic_outputs,
+        final_visual_dir,
+    )
+    write_economic_magnitude_summary(
+        economic_summary_path,
+        economic_outputs,
+        economic_sd_maps,
+        economic_bund_note,
+        economic_generated_visuals,
+        economic_warnings,
+    )
+    if final_visual_dir.exists():
+        write_economic_magnitude_summary(
+            final_visual_dir / "economic_magnitude_outputs_summary.txt",
+            economic_outputs,
+            economic_sd_maps,
+            economic_bund_note,
+            economic_generated_visuals,
+            economic_warnings,
+        )
 
 # Full-sample QLP plots for key drivers.
 if not qlp_full.empty:
@@ -541,6 +1273,11 @@ with open(out_txt, "w", encoding="utf-8") as f:
         f.write("\n\nQLP key results (main drivers)\n")
         f.write(qlp_key_results.to_string(index=False))
     f.write("\n\nQLP sheets saved: qlp_full, qlp_2012_2019, qlp_2020_2022, qlp_2023_present, qlp_key_results.\n")
+    if economic_outputs:
+        f.write("\nEconomic magnitude sheets saved:\n")
+        for sheet_name in economic_outputs:
+            f.write(f"- {sheet_name}\n")
+        f.write(f"\nEconomic magnitude summary saved to: {economic_summary_path}\n")
     if not _HAS_PP:
         f.write("\n\nPP test not available. Install with: pip install arch\n")
 
@@ -583,3 +1320,41 @@ if qlp_frames_summary:
 else:
     print("\nQLP summary:")
     print("No QLP models were estimated.")
+
+if economic_outputs:
+    print("\nEconomic magnitude summary:")
+    print(f"New economic magnitude sheets: {len(economic_outputs)}")
+    print(f"Economic magnitude tables created: {economic_table_count}")
+    print(f"Economic magnitude figures created: {economic_figure_count}")
+    print(f"Output workbook: {out_xlsx}")
+    print(f"Economic magnitude summary: {economic_summary_path}")
+
+    qr_full_print = economic_outputs.get("econmag_qr_full", pd.DataFrame())
+    if not qr_full_print.empty:
+        top_qr = qr_full_print.reindex(
+            qr_full_print["impact_1sd_bps"].abs().sort_values(ascending=False).index
+        ).head(10)
+        print("\nTop 10 QR full-sample +1sd impacts (bps):")
+        for _, r in top_qr.iterrows():
+            print(
+                f"- {console_driver_name(r['param'])} {q_label(r['quantile'])}: "
+                f"{r['impact_1sd_bps']:.2f} bps; significant={bool(r['significant_95'])}"
+            )
+
+    qlp_print = economic_outputs.get("econmag_qlp_all", pd.DataFrame())
+    if not qlp_print.empty:
+        top_qlp = qlp_print.reindex(
+            qlp_print["impact_1sd_bps"].abs().sort_values(ascending=False).index
+        ).head(10)
+        print("\nTop 10 QLP +1sd cumulative impacts (bps):")
+        for _, r in top_qlp.iterrows():
+            print(
+                f"- {r['sample_label']} {console_driver_name(r['param'])} h{int(r['horizon'])} "
+                f"{q_label(r['quantile'])}: {r['impact_1sd_bps']:.2f} bps; "
+                f"significant={bool(r['significant_95'])}"
+            )
+
+    if economic_warnings:
+        print("\nEconomic magnitude warnings:")
+        for warning in economic_warnings:
+            print(f"- {warning}")

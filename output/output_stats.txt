@@ -352,3 +352,20 @@ sample_label  horizon  quantile    param          coef  boot_se    ci_low       
 2023_present       20       0.9    r_eua  6.521541e-05 0.000329 -0.000376  9.085440e-04   847                           300
 
 QLP sheets saved: qlp_full, qlp_2012_2019, qlp_2020_2022, qlp_2023_present, qlp_key_results.
+
+Economic magnitude sheets saved:
+- driver_shock_sizes
+- econmag_qr_full
+- econmag_qr_full_key
+- econmag_qr_sub_fullsd
+- econmag_qr_sub_localsd
+- econmag_qr_sub_summary
+- econmag_qlp_all
+- econmag_qlp_full_key
+- econmag_qlp_sub_summary
+- rolling_252_econmag
+- rolling_504_econmag
+- econmag_qr_scenarios
+- econmag_qr_scenarios_key
+
+Economic magnitude summary saved to: C:\Users\user\Desktop\Doctorat\simpozion\output\\economic_magnitude_summary.txt
